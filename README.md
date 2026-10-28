@@ -1,126 +1,152 @@
-# Full-Stack RAG Application (FastAPI + React)
 
-A production-ready Retrieval-Augmented Generation (RAG) system. This project allows users to upload PDF documents, process and embed their contents securely using ChromaDB, and interact with the knowledge base via a streaming, AI-powered chat interface.
+# RAG Chatbot
 
-The application is built with a decoupled architecture: a blazing-fast **FastAPI backend** handling the AI orchestration and vector database, and a highly responsive **React (Vite) frontend** for the user interface.
+A document-based AI chatbot that lets users upload PDF documents and ask questions about their content. It uses Retrieval-Augmented Generation (RAG) to retrieve relevant text and generate answers grounded in the uploaded documents.
 
-## 🌟 Features
+## Features
 
-* **PDF Ingestion & Processing**: Upload PDFs to break them down into semantically meaningful chunks with intelligent overlap ensuring no context is lost.
-* **Vector Search with ChromaDB**: Uses local, persistent ChromaDB to store high-dimensional embeddings for blazing fast and relevant context retrieval.
-* **Streaming AI Responses**: Real-time token streaming using Server-Sent Events (SSE) so users aren't waiting for the entire LLM response to generate before reading.
-* **Precise Citations**: Automatically tracks document metadata, including file names and page numbers, appending them to generated answers for accuracy and fact-checking.
-* **Decoupled Architecture**: Clean separation of concerns between backend logic and UI, making it highly scalable and easy to maintain.
-* **Render-Ready**: Includes a complete `render.yaml` Blueprint for 1-click infrastructure-as-code deployment to Render.
+- **PDF upload:** Upload a document and process its content for question answering.
+- **RAG pipeline:** Retrieve relevant document chunks before generating a response.
+- **AI-powered answers:** Uses OpenRouter-compatible chat and embedding models.
+- **Source references:** Displays source information, including page numbers, to help users verify answers.
+- **Web interface:** React-based frontend for document uploads and interactive chat.
+- **API backend:** FastAPI handles document ingestion and chat requests.
+- **Local vector storage:** Uses an in-memory vector store with JSON persistence for stored embeddings and document chunks.
 
-## 🛠️ Technology Stack
+## Tech Stack
 
-**Backend**
-* [FastAPI](https://fastapi.tiangolo.com/) - High-performance Python web framework
-* [LangChain](https://python.langchain.com/) - Orchestration framework for LLMs
-* [ChromaDB](https://www.trychroma.com/) - Persistent local vector database
-* [OpenRouter](https://openrouter.ai/) - LLM routing and completions (using `gpt-4o-mini` and `text-embedding-3-small`)
+| Component | Technology |
+|---|---|
+| Frontend | React, Vite, JavaScript, CSS |
+| Backend | Python, FastAPI |
+| AI integration | OpenRouter API |
+| Embeddings | NVIDIA Nemotron embedding model via OpenRouter |
+| Retrieval | LangChain InMemoryVectorStore |
+| Storage | Local JSON persistence |
+| Version control | Git and GitHub |
 
-**Frontend**
-* [React 19](https://react.dev/) - Modern component-based UI
-* [Vite](https://vitejs.dev/) - Ultra-fast frontend build tool and dev server
+## How It Works
 
----
+1. Upload a PDF through the web interface.
+2. The backend extracts and splits the document text into chunks.
+3. The embedding model converts the chunks into vectors.
+4. Relevant chunks are retrieved when a user asks a question.
+5. The chat model generates an answer using the retrieved context.
+6. The application returns the answer with source references where available.
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 RAG-CHATBOT/
-├── backend/                  # FastAPI Application
-│   ├── app/                  # Application source code
-│   │   ├── core/             # Configuration & environment setup
-│   │   ├── db/               # ChromaDB vector store initialization
-│   │   ├── services/         # Core logic: ingestion and RAG streaming
-│   │   └── main.py           # API server entrypoint
-│   ├── chroma_data/          # Persistent local database directory
-│   ├── .env                  # Backend credentials (git-ignored)
-│   └── requirements.txt      # Python dependencies
-│
-├── frontend/                 # React Application (Vite)
-│   ├── src/                  # Components, Hooks, API integration
-│   ├── package.json          # Node.js dependencies
-│   └── vite.config.js        # Vite configuration
-│
-└── render.yaml               # Infrastructure-as-code deployment config
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   ├── core/
+│   │   ├── db/
+│   │   └── services/
+│   ├── tests/
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   └── assets/
+│   ├── package.json
+│   └── vite.config.js
+├── render.yaml
+├── .gitignore
+└── README.md
 ```
 
----
+## Prerequisites
 
-## 🚀 Local Development Setup
+- Python 3.12 recommended
+- Node.js and npm
+- An OpenRouter API key with access to the configured models
 
-### 1. Backend Setup
+## Setup and Run Locally
 
-Open a terminal and navigate to the backend directory:
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/SagarDAS200/RAG-CHATBOT.git
+cd RAG-CHATBOT
+```
+
+### 2. Configure the backend
+
+Open a terminal in the project root:
+
 ```bash
 cd backend
+py -3.12 -m venv venv
 ```
 
-Create and activate a virtual environment:
+Activate the virtual environment on Windows:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+Install the Python dependencies:
+
 ```bash
-python -m venv venv
-# On Windows:
-.\venv\Scripts\activate
-# On Mac/Linux:
-source venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
-Install dependencies:
+Create a `.env` file inside `backend/` and configure the environment variables required by `backend/app/core/config.py`. Add your OpenRouter API key locally; never commit your `.env` file or publish your API key.
+
+Start the backend from the `backend/` directory:
+
 ```bash
-pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
 ```
 
-Create a `.env` file inside the `backend/` folder and add your credentials:
-```env
-OPENAI_API_KEY="sk-or-v1-..."  # Your OpenRouter or OpenAI API Key
-CHUNK_SIZE=512
-CHUNK_OVERLAP=64
-```
+Backend URL: `http://127.0.0.1:8000`
 
-Start the FastAPI Development Server:
-```bash
-uvicorn app.main:app --reload --port 8000
-```
-*The API will be available at [http://localhost:8000](http://localhost:8000)*
-*Interactive API docs available at [http://localhost:8000/docs](http://localhost:8000/docs)*
+### 3. Configure the frontend
 
-### 2. Frontend Setup
+Open a second terminal from the project root:
 
-Open a new terminal session and navigate to the frontend directory:
 ```bash
 cd frontend
-```
-
-Install Node dependencies:
-```bash
 npm install
-```
-
-Start the Vite Development Server:
-```bash
 npm run dev
 ```
-*The UI will be available at [http://localhost:5173](http://localhost:5173)*
+
+Open the local URL printed by Vite, typically `http://localhost:5173`.
+
+## Usage
+
+1. Start both the backend and frontend.
+2. Open the frontend in your browser.
+3. Upload a PDF document.
+4. Wait for document processing to finish.
+5. Ask questions about the uploaded document.
+6. Review the generated answer and its source references.
+
+## Security Notes
+
+- Keep API keys in local environment variables.
+- Never commit `.env` files, private documents, or local vector-store data.
+- Do not upload confidential documents to services unless you are authorized to do so.
+- API and model availability may depend on your OpenRouter account and the models currently accessible to it.
+
+## Future Improvements
+
+- Add automated tests for document ingestion and retrieval.
+- Improve retrieval quality and source attribution.
+- Add support for more document formats.
+- Add deployment instructions and a hosted demo.
+- Improve error handling and loading feedback.
+
+## Author
+
+**Sagar Das**
+
+- GitHub: [SagarDAS200](https://github.com/SagarDAS200)
+- LinkedIn: [sagardas200](https://www.linkedin.com/in/sagardas200/)
 
 ---
 
-## ☁️ Deployment (Render)
-
-This project features a fully configured `render.yaml` Blueprint which allows you to deploy the frontend and backend simultaneously as Infrastructure-as-code.
-
-1. Push your code to a GitHub/GitLab repository.
-2. Log into the [Render Dashboard](https://dashboard.render.com/).
-3. Click **New +** and select **Blueprint**.
-4. Connect your repository. Render will automatically detect the `render.yaml` file.
-5. Provide an `OPENAI_API_KEY` when prompted in the environment variables step.
-6. Click **Apply**. 
-
-Render will intelligently deploy a **web service** for your FastAPI backend, and a **Static Site** for your React frontend, securely linking the frontend to the backend's live API URL using `VITE_API_URL` zero-config binding automatically.
-
-## 📝 License
-
-This project is open-source and available under the [MIT License](LICENSE).
+*An educational project demonstrating document ingestion, semantic retrieval, and AI-powered question answering using Retrieval-Augmented Generation.*
